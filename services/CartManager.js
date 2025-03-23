@@ -36,19 +36,65 @@ class CartManager{
         const carts = await this._readCartsFromFile();
         const cart = carts.find((c) => c.id === cartId);
 
-        if (!cart) {
-            throw new Error("Cart not found");
-        }
-
+        if (!cart) throw new Error("Cart not found");
         const productInCart = cart.products.find((p) => p.product === productId);
+
         if (productInCart) {
             productInCart.quantity++;
         } else {
             cart.products.push({ product: productId, quantity: 1 });
         }
+        await this._writeCartsToFile(carts);
+    }
+
+    async removeProductFromCart(cartId, productId) {
+        const carts = await this._readCartsFromFile();
+        const cart = carts.find((c) => c.id === cartId);
+        if (!cart) throw new Error("Cart not found");
+        const originalLength = cart.products.length;
+        cart.products = cart.products.filter((p) => p.product !== productId);
+        if (cart.products.length === originalLength) throw new Error("Product not found in cart")
+        await this._writeCartsToFile(carts);
+    }
+
+    async updateCartProducts(cartId, productsArray) {
+        const carts = await this._readCartsFromFile();
+        const cart = carts.find((c) => c.id === cartId);
+
+        if (!cart) throw new Error("Cart not found");
+
+        cart.products = productsArray.map(p => ({
+            product: p.productId,
+            quantity: p.quantity
+        }));
 
         await this._writeCartsToFile(carts);
     }
+
+    async updateProductQuantity(cartId, productId, quantity) {
+        const carts = await this._readCartsFromFile();
+        const cart = carts.find((c) => c.id === cartId);
+
+        if (!cart) throw new Error("Cart not found");
+
+        const product = cart.products.find((p) => p.product === productId);
+
+        if (!product) throw new Error("Product not found in cart");
+
+        product.quantity = quantity;
+        await this._writeCartsToFile(carts);
+    }
+
+    async clearCart(cartId) {
+        const carts = await this._readCartsFromFile();
+        const cart = carts.find((c) => c.id === cartId);
+
+        if (!cart) throw new Error("Cart not found");
+
+        cart.products = [];
+        await this._writeCartsToFile(carts);
+    }
+
 }
 
 module.exports = CartManager;
